@@ -6,8 +6,26 @@ A lightweight **Task Management API** built using **Spring Boot (Java 21)** that
 
 ---
 
-## 🚀 Tech Stack
+## 🏗 Architecture
+- Layered architecture (Controller → Service → Repository)
+- DTO-based API contract
+- In-memory H2 database for simplicity
+- Global exception handling for consistent error responses
+- Validation at API boundary
 
+## ⚙️ Design Decisions
+- Used Spring Boot for rapid development and production readiness
+- Used H2 database for lightweight setup and ease of testing
+- Implemented minimal frontend to demonstrate end-to-end capability
+- Chose simple status model to keep API intuitive
+
+## 🚀 Future Improvements
+- Authentication / authorization
+- Persistent DB (PostgreSQL)
+- Docker support
+- Event-driven architecture (Kafka)
+
+## 🚀 Tech Stack
 * Java 21
 * Spring Boot 3.x
 * Spring Web / Spring Data JPA
