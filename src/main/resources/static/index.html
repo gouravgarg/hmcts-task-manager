@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" href="data:,">
+    <title>Task Manager</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        input, select { margin: 5px; padding: 5px; }
+        button { margin-left: 5px; padding: 5px 10px; }
+        .task { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .error { color: red; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>Create Task</h2>
+
+<input id="title" placeholder="Title"/>
+<input id="description" placeholder="Description"/>
+<input id="dueDate" type="date"/>
+
+<button onclick="createTask()">Create</button>
+
+<div class="error" id="error"></div>
+
+<h2>Tasks</h2>
+<div id="tasks"></div>
+
+<script>
+
+    // ✅ IMPORTANT: pagination included (matches backend)
+    const LIST_API = "/tasks?page=0&size=15";
+    const BASE_API = "/tasks";
+
+    function showError(message) {
+        document.getElementById("error").innerText = message;
+    }
+
+    function clearError() {
+        document.getElementById("error").innerText = "";
+    }
+
+    // ✅ Load tasks
+    async function loadTasks() {
+        try {
+            const res = await fetch(LIST_API);
+
+            if (!res.ok) throw new Error("Failed to load tasks");
+
+            const data = await res.json();
+
+            const container = document.getElementById("tasks");
+            container.innerHTML = "";
+
+            if (!data.content || data.content.length === 0) {
+                container.innerHTML = "<i>No tasks found</i>";
+                return;
+            }
+
+            data.content.forEach(task => {
+                const div = document.createElement("div");
+                div.className = "task";
+
+                div.innerHTML = `
+                    <b>${task.title}</b><br/>
+                    Status: ${task.status}<br/>
+                    Due: ${task.dueDate || "N/A"}<br/>
+
+                    <select id="status-${task.id}">
+                        <option value="TODO">TODO</option>
+                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="DONE">DONE</option>
+                        <option value="FAILED">FAILED</option>
+                    </select>
+
+                    <button onclick="updateStatus(${task.id})">Update</button>
+                    <button onclick="deleteTask(${task.id})">Delete</button>
+                `;
+
+                container.appendChild(div);
+            });
+
+            clearError();
+
+        } catch (err) {
+            showError(err.message);
+        }
+    }
+
+    // ✅ Create task
+    async function createTask() {
+        try {
+            const title = document.getElementById("title").value;
+            const description = document.getElementById("description").value;
+            const dueDate = document.getElementById("dueDate").value;
+
+            if (!title) {
+                showError("Title is required");
+                return;
+            }
+
+            const res = await fetch(BASE_API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, description, dueDate })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || "Failed to create task");
+            }
+
+            // Clear form
+            document.getElementById("title").value = "";
+            document.getElementById("description").value = "";
+            document.getElementById("dueDate").value = "";
+
+            loadTasks();
+
+        } catch (err) {
+            showError(err.message);
+        }
+    }
+
+    // ✅ Update status
+    async function updateStatus(id) {
+        try {
+            const status = document.getElementById(`status-${id}`).value;
+
+            const res = await fetch(`${BASE_API}/${id}/status`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || "Failed to update");
+            }
+
+            loadTasks();
+
+        } catch (err) {
+            showError(err.message);
+        }
+    }
+
+    // ✅ Delete task
+    async function deleteTask(id) {
+        try {
+            const res = await fetch(`${BASE_API}/${id}`, {
+                method: "DELETE"
+            });
+
+            if (!res.ok) throw new Error("Failed to delete");
+
+            loadTasks();
+
+        } catch (err) {
+            showError(err.message);
+        }
+    }
+
+    // Initial load
+    loadTasks();
+
+</script>
+
+</body>
+</html>
